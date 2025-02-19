@@ -83,4 +83,5 @@ def get_factures():
 # ----------------------------- DÉMARRER FLASK -----------------------------
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render utilise une variable d'environnement PORT
+    app.run(host="0.0.0.0", port=port, debug=True)
