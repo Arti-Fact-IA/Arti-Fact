@@ -1,15 +1,15 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-import pyodbc
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
 
-# Configuration de la connexion SQL Server
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sa:1793@localhost/gestion_factures?driver=ODBC+Driver+17+for+SQL+Server'
+# Configuration de la connexion MySQL sur Render
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "postgresql://gestion_factures_db_user:Oma1Km2GDdOjrcDLif9dUStXDpdnqfWN@dpg-cuqk8a5ds78s73fuolg0-a.frankfurt-postgres.render.com/gestion_factures_db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'mon_super_secret'  # Change ce secret en prod !
+app.config['JWT_SECRET_KEY'] = 'mon_super_secret'
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
