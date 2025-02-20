@@ -16,8 +16,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "postgresql://
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'mon_super_secret'
 
-db = SQLAlchemy(app)
-jwt = JWTManager(app)
 
 # Initialisation de la base de données et JWT
 db = SQLAlchemy(app)
