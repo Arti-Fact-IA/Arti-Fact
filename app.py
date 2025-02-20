@@ -49,7 +49,7 @@ class Utilisateur(db.Model):
 class Facture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)
-    entreprise_emettrice = db.Column(db.String(255), nullable=False)
+    entreprise_emettrice = db.Column(db.String(255), nullable=False, default="NC")
     nom_fichier = db.Column(db.String(255), nullable=False)
     montant = db.Column(db.Numeric(10,2), nullable=True)
     date_facture = db.Column(db.Date, nullable=True)
@@ -107,15 +107,19 @@ def upload_file():
 
         extracted_text = extract_text(filepath)
 
-        new_facture = Facture(
-                                user_id=get_jwt_identity(),
-                                entreprise_emettrice="Inconnue",
-                                nom_fichier=filename,
-                                montant=0.0 if extracted_text == "" else None,  # Ajout d'une valeur par défaut
-                                date_facture=None,
-                                status="en attente"
-                             )
+        # 🚀 Vérification et valeurs par défaut
+        entreprise_emettrice = "NC"  # Par défaut si non trouvée
+        montant = None  # Peut être NULL
+        date_facture = None  # Peut être NULL
 
+        new_facture = Facture(
+            user_id=get_jwt_identity(),
+            entreprise_emettrice=entreprise_emettrice,
+            nom_fichier=filename,
+            montant=montant,
+            date_facture=date_facture,
+            status="en attente"
+        )
         db.session.add(new_facture)
         db.session.commit()
 
