@@ -4,9 +4,10 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-import pytesseract
-from pdf2image import convert_from_path
+import tesserocr
 from PIL import Image
+from pdf2image import convert_from_path
+
 
 # Configuration Flask
 app = Flask(__name__)
@@ -154,12 +155,13 @@ def extract_text(filepath):
         images = convert_from_path(filepath)
         text = ""
         for img in images:
-            text += pytesseract.image_to_string(img)
+            text += tesserocr.image_to_text(img)
         return text
     elif filepath.lower().endswith((".png", ".jpg", ".jpeg")):
         img = Image.open(filepath)
-        return pytesseract.image_to_string(img)
+        return tesserocr.image_to_text(img)
     return "Format non supporté"
+
 
 # ----------------------------- ROUTE D'ACCUEIL -----------------------------
 
