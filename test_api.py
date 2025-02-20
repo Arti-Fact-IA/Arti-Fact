@@ -6,7 +6,7 @@ import requests
 BASE_URL = "https://arti-fact-7tix.onrender.com/" 
 
 TOKEN = None  
-TEST_EMAIL = f"testuser_{random.randint(1000, 9999)}@example.com"
+TEST_EMAIL = f"testuser_{random.randint(1000, 9999)}@example.com" #en mode random user
 
 # 🔑 Vérifie si l'utilisateur existe avant de le créer
 def test_register():
