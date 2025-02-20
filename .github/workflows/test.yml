@@ -1,0 +1,33 @@
+name: Run API Tests
+
+on: 
+  push:
+    branches:
+      - main  # Exécute les tests sur chaque push dans la branche 'main'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📂 Cloner le repo
+        uses: actions/checkout@v4
+
+      - name: 🐍 Installer Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Installer les dépendances
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: 🚀 Lancer les tests Pytest
+        run: |
+          source venv/bin/activate
+          pytest test_api.py --disable-warnings
