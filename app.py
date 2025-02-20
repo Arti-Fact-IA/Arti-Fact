@@ -4,24 +4,22 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-import tesserocr
-tesserocr.PyTessBaseAPI(path="/usr/share/tesseract-ocr/4.00/tessdata")  # Définir le bon chemin
-from PIL import Image
+import requests
 from pdf2image import convert_from_path
-
+from PIL import Image
 
 # Configuration Flask
 app = Flask(__name__)
 
-# Configuration de la connexion PostgreSQL sur Render
+# Configuration de la base PostgreSQL sur Render
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "postgresql://gestion_factures_db_user:Oma1Km2GDdOjrcDLif9dUStXDpdnqfWN@dpg-cuqk8a5ds78s73fuolg0-a.frankfurt-postgres.render.com/gestion_factures_db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'mon_super_secret'
 
-
 # Initialisation de la base de données et JWT
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 jwt = JWTManager(app)
+db.init_app(app)
 
 # 📂 Dossier de stockage des factures
 UPLOAD_FOLDER = "uploads"
@@ -31,6 +29,9 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # ✅ Vérifier et créer le dossier "uploads" s'il n'existe pas
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+# 🔑 Clé API OCR.space (à récupérer sur https://ocr.space/OCRAPI)
+OCR_API_KEY = "K86754708488957"  # Remplace par ta clé API OCR.space
 
 # Vérifie si le fichier est une facture valide (PDF/Image)
 def allowed_file(filename):
@@ -54,13 +55,12 @@ class Facture(db.Model):
     date_facture = db.Column(db.Date, nullable=True)
     status = db.Column(db.String(50), default='en attente')
 
-# Création des tables en base
+# Création des tables après l'initialisation de l'app
 with app.app_context():
     db.create_all()
 
 # ----------------------------- ROUTES AUTHENTIFICATION -----------------------------
 
-# 📌 Route d'inscription
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -76,7 +76,6 @@ def register():
     db.session.commit()
     return jsonify({"message": "Utilisateur enregistré avec succès"}), 201
 
-# 📌 Route de connexion
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -90,7 +89,6 @@ def login():
 
 # ----------------------------- ROUTES FACTURES -----------------------------
 
-# 📌 Route pour téléverser une facture
 @app.route("/upload", methods=["POST"])
 @jwt_required()
 def upload_file():
@@ -107,16 +105,14 @@ def upload_file():
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(filepath)
 
-        # 🔥 Extraction du texte via OCR
         extracted_text = extract_text(filepath)
 
-        # 📌 Enregistrement en base de données
         new_facture = Facture(
             user_id=get_jwt_identity(),
-            entreprise_emettrice="Inconnue",  # Remplacé après OCR
+            entreprise_emettrice="Inconnue",
             nom_fichier=filename,
-            montant=None,  # À extraire de l'OCR
-            date_facture=None,  # À extraire de l'OCR
+            montant=None,
+            date_facture=None,
             status="en attente"
         )
         db.session.add(new_facture)
@@ -130,7 +126,6 @@ def upload_file():
 
     return jsonify({"message": "Format de fichier non supporté"}), 400
 
-# 📌 Route pour récupérer toutes les factures d’un utilisateur
 @app.route("/factures", methods=["GET"])
 @jwt_required()
 def get_factures():
@@ -149,29 +144,23 @@ def get_factures():
     ]
     return jsonify(factures_list), 200
 
-# ----------------------------- OCR : EXTRACTION DE TEXTE -----------------------------
+# ----------------------------- OCR -----------------------------
 
 def extract_text(filepath):
-    try:
-        with tesserocr.PyTessBaseAPI(path="/usr/share/tesseract-ocr/4.00/tessdata") as api:
-            if filepath.lower().endswith(".pdf"):
-                images = convert_from_path(filepath)
-                text = ""
-                for img in images:
-                    api.SetImage(img)
-                    text += api.GetUTF8Text()
-                return text
-            elif filepath.lower().endswith((".png", ".jpg", ".jpeg")):
-                img = Image.open(filepath)
-                api.SetImage(img)
-                return api.GetUTF8Text()
-            else:
-                return "Format non supporté"
-    except Exception as e:
-        print(f"Erreur OCR : {e}")
-        return "Erreur lors de l'extraction du texte"
+    with open(filepath, "rb") as file:
+        response = requests.post(
+            "https://api.ocr.space/parse/image",
+            files={"file": file},
+            data={"apikey": OCR_API_KEY, "language": "fre"},
+        )
 
+    result = response.json()
+    
+    if result["IsErroredOnProcessing"]:
+        return "Erreur OCR : " + result["ErrorMessage"][0]
 
+    extracted_text = result["ParsedResults"][0]["ParsedText"]
+    return extracted_text.strip()
 
 # ----------------------------- ROUTE D'ACCUEIL -----------------------------
 
