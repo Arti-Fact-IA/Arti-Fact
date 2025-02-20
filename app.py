@@ -12,7 +12,7 @@ from PIL import Image
 app = Flask(__name__)
 
 # Configuration de la base PostgreSQL sur Render
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "postgresql://gestion_factures_db_user:Oma1Km2GDdOjrcDLif9dUStXDpdnqfWN@dpg-cuqk8a5ds78s73fuolg0-a.frankfurt-postgres.render.com/gestion_factures_db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'mon_super_secret'
 
