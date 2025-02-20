@@ -1,0 +1,37 @@
+name: 🚀 Deploy Flask App to Render
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📂 Cloner le repo
+        uses: actions/checkout@v4
+
+      - name: 🐍 Installer Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Installer Docker CLI
+        run: sudo apt-get install -y docker.io
+
+      - name: 🔄 Build et Push de l’image Docker
+        run: |
+          docker build -t gestion-factures .
+          docker tag gestion-factures registry.render.com/gestion-factures:latest
+          docker login -u _json_key -p "${{ secrets.RENDER_API_KEY }}" registry.render.com
+          docker push registry.render.com/gestion-factures:latest
+
+      - name: 🚀 Déployer sur Render
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv-xxxxxx" \
+               -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+               -H "Accept: application/json" \
+               -H "Content-Type: application/json" \
+               --data '{"clearCache": false}'
