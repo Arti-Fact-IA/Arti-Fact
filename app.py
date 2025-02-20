@@ -7,9 +7,12 @@ import os
 import requests
 from pdf2image import convert_from_path
 from PIL import Image
+from flask_cors import CORS
 
 # Configuration Flask
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "https://arti-fact-frontend.onrender.com"}})
+
 
 # Configuration de la base PostgreSQL sur Render
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
