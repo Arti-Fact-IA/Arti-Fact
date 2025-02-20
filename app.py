@@ -108,13 +108,14 @@ def upload_file():
         extracted_text = extract_text(filepath)
 
         new_facture = Facture(
-            user_id=get_jwt_identity(),
-            entreprise_emettrice="Inconnue",
-            nom_fichier=filename,
-            montant=None,
-            date_facture=None,
-            status="en attente"
-        )
+                                user_id=get_jwt_identity(),
+                                entreprise_emettrice="Inconnue",
+                                nom_fichier=filename,
+                                montant=0.0 if extracted_text == "" else None,  # Ajout d'une valeur par défaut
+                                date_facture=None,
+                                status="en attente"
+                             )
+
         db.session.add(new_facture)
         db.session.commit()
 
