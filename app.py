@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 import tesserocr
+tesserocr.PyTessBaseAPI(path="/usr/share/tesseract-ocr/4.00/tessdata")  # Définir le bon chemin
 from PIL import Image
 from pdf2image import convert_from_path
 
@@ -151,16 +152,25 @@ def get_factures():
 # ----------------------------- OCR : EXTRACTION DE TEXTE -----------------------------
 
 def extract_text(filepath):
-    if filepath.lower().endswith(".pdf"):
-        images = convert_from_path(filepath)
-        text = ""
-        for img in images:
-            text += tesserocr.image_to_text(img)
-        return text
-    elif filepath.lower().endswith((".png", ".jpg", ".jpeg")):
-        img = Image.open(filepath)
-        return tesserocr.image_to_text(img)
-    return "Format non supporté"
+    try:
+        with tesserocr.PyTessBaseAPI(path="/usr/share/tesseract-ocr/4.00/tessdata") as api:
+            if filepath.lower().endswith(".pdf"):
+                images = convert_from_path(filepath)
+                text = ""
+                for img in images:
+                    api.SetImage(img)
+                    text += api.GetUTF8Text()
+                return text
+            elif filepath.lower().endswith((".png", ".jpg", ".jpeg")):
+                img = Image.open(filepath)
+                api.SetImage(img)
+                return api.GetUTF8Text()
+            else:
+                return "Format non supporté"
+    except Exception as e:
+        print(f"Erreur OCR : {e}")
+        return "Erreur lors de l'extraction du texte"
+
 
 
 # ----------------------------- ROUTE D'ACCUEIL -----------------------------
