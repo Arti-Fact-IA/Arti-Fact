@@ -152,6 +152,21 @@ def get_factures():
     ]
     return jsonify(factures_list), 200
 
+@app.route("/factures/<int:facture_id>/articles", methods=["GET"])
+@jwt_required()
+def get_articles(facture_id):
+    user_id = get_jwt_identity()
+    facture = Facture.query.filter_by(id=facture_id, user_id=user_id).first()
+
+    if not facture:
+        return jsonify({"message": "Facture introuvable"}), 404
+
+    articles = Article.query.filter_by(facture_id=facture.id).all()
+    articles_list = [{"nom": a.nom, "quantite": a.quantite, "prix": float(a.prix)} for a in articles]
+
+    return jsonify(articles_list), 200
+
+
 # ----------------------------- OCR -----------------------------
 
 def extract_text(filepath):
